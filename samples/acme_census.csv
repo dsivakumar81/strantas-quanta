@@ -1,0 +1,5 @@
+employee_id,first_name,last_name,age,state,salary,class,dependent_count
+1001,Ava,Lopez,34,TX,72000,Salaried,2
+1002,Noah,Patel,41,TX,88000,Executive,1
+1003,Mia,Nguyen,29,OK,54000,Hourly,0
+1004,Liam,Carter,53,LA,99000,Salaried,3

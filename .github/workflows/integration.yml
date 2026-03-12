@@ -1,0 +1,35 @@
+name: Integration
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
+
+      - name: Create virtualenv and install project
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Bootstrap dev stack
+        run: |
+          chmod +x scripts/bootstrap_dev.sh
+          ./scripts/bootstrap_dev.sh
+
+      - name: Run integration tests
+        run: |
+          source .venv/bin/activate
+          pytest tests/integration -q

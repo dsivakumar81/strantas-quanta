@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: strantas-quanta
+Version: 0.1.0
+Summary: QUANTA MVP scaffold for submission-to-quote intake
+Requires-Python: >=3.11
+Requires-Dist: fastapi<1.0,>=0.115
+Requires-Dist: uvicorn<1.0,>=0.35
+Requires-Dist: pydantic<3.0,>=2.11

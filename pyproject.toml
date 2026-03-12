@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "strantas-quanta"
+version = "0.1.0"
+description = "QUANTA MVP scaffold for submission-to-quote intake"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1.0",
+  "uvicorn>=0.35,<1.0",
+  "pydantic>=2.11,<3.0",
+  "sqlalchemy>=2.0,<3.0",
+  "psycopg[binary]>=3.3,<4.0",
+  "boto3>=1.42,<2.0",
+  "openpyxl>=3.1,<4.0",
+  "python-multipart>=0.0.22,<1.0",
+  "pdfplumber>=0.11,<1.0",
+  "pypdf>=6.0,<7.0",
+  "reportlab>=4.4,<5.0",
+  "pytesseract>=0.3.13,<1.0",
+  "alembic>=1.18,<2.0",
+  "pytest>=9.0,<10.0"
+]
+
+[tool.setuptools]
+package-dir = {"" = "apps/api"}
+
+[tool.setuptools.packages.find]
+where = ["apps/api"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["apps/api"]
