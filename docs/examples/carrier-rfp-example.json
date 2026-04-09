@@ -1,0 +1,35 @@
+{
+  "identifier": "5a43e191-cba3-5c3f-9461-eaa0c02a09bb",
+  "effectiveDate": "2026-07-01",
+  "dueDate": "2026-05-15",
+  "status": "pending",
+  "employer": {
+    "name": "ACME Manufacturing",
+    "contacts": [],
+    "locations": []
+  },
+  "hasEmployeeOutsideUS": false,
+  "groupConfiguration": {
+    "benefitClasses": [
+      {"identifier": "class-1", "name": "Executive", "minWeeklyEligibleHours": "30"},
+      {"identifier": "class-2", "name": "Hourly", "minWeeklyEligibleHours": "30"},
+      {"identifier": "class-3", "name": "Salaried", "minWeeklyEligibleHours": "30"}
+    ],
+    "coverages": [
+      {"coverageType": "basicLife", "benefitPlanName": "basic_life", "contributionType": "fullyEmployerPaid", "planDetails": {"benefitBasis": "2x_salary", "maxBenefit": 500000}},
+      {"coverageType": "longTermDisability", "benefitPlanName": "ltd", "contributionType": "fullyEmployerPaid", "planDetails": {"benefitPercent": 60, "eliminationPeriodDays": 90, "maxMonthlyBenefit": 10000}},
+      {"coverageType": "dental", "benefitPlanName": "ppo", "contributionType": "fullyEmployerPaid", "planDetails": {"attributes": {"coverage_tiers": "100/80/50"}}}
+    ],
+    "producers": [
+      {"type": "brokerOfRecord", "broker": {"contact": {"fullName": "Northstar Benefits"}}}
+    ],
+    "numberOfEligibleEmployees": 4
+  },
+  "census": [
+    {"employeeCode": "1001", "dependentRelationship": "employee", "benefitClassName": "Salaried", "annualIncome": 72000},
+    {"employeeCode": "1002", "dependentRelationship": "employee", "benefitClassName": "Executive", "annualIncome": 88000}
+  ],
+  "files": [
+    {"fileName": "acme_census.pdf", "mediaType": "application/pdf", "documentType": "census", "storageKey": "tenants/default/submissions/ACME_submission/ATT-2026-000001-acme_census.pdf"}
+  ]
+}

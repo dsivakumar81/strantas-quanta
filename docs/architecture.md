@@ -22,7 +22,10 @@ This scaffold intentionally covers:
 - Reader pass with intent classification and document tagging
 - attachment-backed LOB/plan extraction with field precedence warnings
 - provider event normalization for future Microsoft Graph / Gmail / SMTP ingress
-- connector scaffolding metadata for provider rollout planning
+- connector subscription refresh and polling orchestration for Graph/Gmail
+- durable job queue, dead-letter replay, and alert feed backed by Postgres
+- persisted idempotency fingerprints and tenant-aware artifact partitioning
+- field-level extraction result objects carried on normalized quote and LOB records
 - BQM validation before output persistence
 - mock normalization into BQM-compatible JSON
 
@@ -34,8 +37,8 @@ This scaffold intentionally defers:
 
 ## Recommended next implementation slices
 
-1. Extend object storage to persist raw email bodies and parsed artifacts, not only attachment binaries.
+1. Extend provider orchestration from API-triggered poll/refresh into scheduled workers.
 2. Improve OCR table reconstruction for noisier scanned census PDFs.
-3. Move parse/extract/normalize steps to async jobs while keeping current endpoints as orchestration triggers.
-4. Add evidence precedence rules and contradiction resolution into normalized output.
-5. Add CI automation that boots the Docker dev stack and runs the integration suite.
+3. Add field-level extraction depth for class structure, eligibility, participation minimums, and contribution splits.
+4. Expand contradiction resolution and confidence scoring by source/document type.
+5. Add richer alert sinks and external observability integrations.

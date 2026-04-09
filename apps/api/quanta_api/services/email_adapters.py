@@ -38,6 +38,8 @@ class EmailAdapterService:
         )
 
     def _parse_gmail(self, payload: dict) -> InboundEmailPayload:
+        if "payload" in payload:
+            return self._parse_gmail_message(payload)
         headers = {item.get("name", "").lower(): item.get("value", "") for item in payload.get("headers", [])}
         attachments = [
             EmailAttachmentInput(
@@ -53,7 +55,29 @@ class EmailAdapterService:
             recipients=recipients,
             subject=headers.get("subject", ""),
             body_raw=payload.get("body", ""),
-            body_text=payload.get("snippet", payload.get("body", "")),
+            body_text=payload.get("body") or payload.get("snippet", ""),
+            attachments=attachments,
+        )
+
+    def _parse_gmail_message(self, payload: dict) -> InboundEmailPayload:
+        message_payload = payload.get("payload", {})
+        headers = {item.get("name", "").lower(): item.get("value", "") for item in message_payload.get("headers", [])}
+        body_plain, body_html = self._gmail_bodies(message_payload)
+        attachments = [
+            EmailAttachmentInput(
+                file_name=item.get("filename", "attachment.bin"),
+                content_type=item.get("mimeType"),
+                content_base64=item.get("data"),
+            )
+            for item in self._gmail_attachments(message_payload)
+        ]
+        recipients = [item.strip() for item in headers.get("to", "").split(",") if item.strip()]
+        return InboundEmailPayload(
+            sender=headers.get("from", "unknown@gmail.local"),
+            recipients=recipients,
+            subject=headers.get("subject", ""),
+            body_raw=body_html or body_plain or payload.get("snippet", ""),
+            body_text=body_plain or body_html or payload.get("snippet", ""),
             attachments=attachments,
         )
 
@@ -87,3 +111,54 @@ class EmailAdapterService:
             return True
         except Exception:
             return False
+
+    def _gmail_bodies(self, payload: dict) -> tuple[str, str]:
+        plain_parts: list[str] = []
+        html_parts: list[str] = []
+        for part in self._walk_gmail_parts(payload):
+            mime_type = part.get("mimeType", "")
+            data = part.get("body", {}).get("data")
+            if mime_type not in {"text/plain", "text/html"} or not data:
+                continue
+            decoded = self._decode_websafe_base64(data)
+            if mime_type == "text/plain":
+                plain_parts.append(decoded)
+            else:
+                html_parts.append(decoded)
+        if not plain_parts and not html_parts:
+            body_data = payload.get("body", {}).get("data")
+            if body_data:
+                return self._decode_websafe_base64(body_data), ""
+        return "\n".join(part for part in plain_parts if part).strip(), "\n".join(part for part in html_parts if part).strip()
+
+    def _gmail_attachments(self, payload: dict) -> list[dict]:
+        attachments: list[dict] = []
+        for part in self._walk_gmail_parts(payload):
+            filename = part.get("filename")
+            data = part.get("body", {}).get("data")
+            if filename and data:
+                attachments.append(
+                    {
+                        "filename": filename,
+                        "mimeType": part.get("mimeType"),
+                        "data": self._normalize_base64(data),
+                    }
+                )
+        return attachments
+
+    def _walk_gmail_parts(self, payload: dict) -> list[dict]:
+        parts: list[dict] = []
+        queue = list(payload.get("parts", []))
+        while queue:
+            current = queue.pop(0)
+            parts.append(current)
+            queue[0:0] = current.get("parts", [])
+        return parts
+
+    def _decode_websafe_base64(self, value: str) -> str:
+        return base64.urlsafe_b64decode(value.encode("utf-8")).decode("utf-8", errors="ignore")
+
+    def _normalize_base64(self, value: str) -> str:
+        if not value:
+            return value
+        return base64.b64encode(base64.urlsafe_b64decode(value.encode("utf-8"))).decode("utf-8")

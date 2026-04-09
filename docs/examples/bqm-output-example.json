@@ -1,0 +1,62 @@
+{
+  "caseId": "QNT-2026-000001",
+  "submissionId": "SUB-2026-000001",
+  "quoteType": "new_business",
+  "employer": {
+    "name": "ACME Manufacturing",
+    "effective_date": "2026-07-01",
+    "situs_state": "TX"
+  },
+  "broker": {
+    "name": "Northstar Benefits"
+  },
+  "lobs": [
+    {
+      "lobCaseId": "QNT-2026-000001-LIFE",
+      "lobType": "group_life",
+      "planDesigns": [
+        {
+          "plan_type": "basic_life",
+          "benefit_basis": "2x_salary",
+          "max_benefit": 500000.0
+        }
+      ],
+      "warnings": [
+        "Plan design derived from attachment evidence; review extracted terms"
+      ],
+      "evidenceReferences": [
+        {
+          "source_type": "attachment",
+          "file_name": "acme_census.pdf",
+          "confidence": 0.78
+        }
+      ]
+    }
+  ],
+  "census": {
+    "employeeCount": 4,
+    "dependentCount": 6,
+    "classesDetected": ["Executive", "Hourly", "Salaried"],
+    "statesDetected": ["LA", "OK", "TX"],
+    "rows": [],
+    "summary": {
+      "avg_age": 39.2,
+      "median_salary": 80000.0
+    },
+    "evidenceReferences": [
+      {
+        "source_type": "attachment",
+        "file_name": "acme_census.pdf",
+        "page_number": 1,
+        "cell_range": "A1:H5",
+        "confidence": 0.86
+      }
+    ]
+  },
+  "warnings": [],
+  "confidence": {
+    "overall": 0.72,
+    "census": 0.92,
+    "plan_design": 0.68
+  }
+}

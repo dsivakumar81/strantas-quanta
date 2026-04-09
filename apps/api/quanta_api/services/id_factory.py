@@ -30,6 +30,14 @@ class IdFactory:
         year, counter = self._next("CEN")
         return f"CEN-{year}-{counter:06d}"
 
+    def next_job_id(self) -> str:
+        year, counter = self._next("JOB")
+        return f"JOB-{year}-{counter:06d}"
+
+    def next_alert_id(self) -> str:
+        year, counter = self._next("ALT")
+        return f"ALT-{year}-{counter:06d}"
+
     def lob_case_id(self, parent_case_id: str, lob_type: str) -> str:
         suffix = lob_type.upper().replace("GROUP_", "").replace("SUPPLEMENTAL_", "SUPP_")
         return f"{parent_case_id}-{suffix}"

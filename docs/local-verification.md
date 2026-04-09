@@ -3,10 +3,22 @@
 ## Start
 
 ```bash
-./scripts/bootstrap_dev.sh
+bash scripts/bootstrap_dev.sh
 set -a; source .env; set +a
 source .venv/bin/activate
 uvicorn quanta_api.main:app --app-dir apps/api --host 127.0.0.1 --port 8000
+```
+
+Readiness:
+
+```bash
+curl http://127.0.0.1:8000/readiness
+```
+
+OpenAPI:
+
+```bash
+curl http://127.0.0.1:8000/openapi.json
 ```
 
 ## Sample flow

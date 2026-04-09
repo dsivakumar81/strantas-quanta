@@ -41,6 +41,7 @@ source .venv/bin/activate
 python scripts/reset_dev_db.py
 alembic upgrade head
 python scripts/generate_sample_pdf.py
+python scripts/generate_dental_vision_rfp_pdf.py
 python scripts/generate_sample_xlsx.py
 python scripts/generate_scanned_pdf.py
 

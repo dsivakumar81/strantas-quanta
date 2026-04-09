@@ -1,0 +1,59 @@
+{
+  "info": {
+    "name": "STRANTAS QUANTA v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Core QUANTA MVP v1 endpoints for intake, processing, health, and output retrieval."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "submissionId", "value": "SUB-2026-000001" },
+    { "key": "caseId", "value": "QNT-2026-000001" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        { "name": "Health", "request": { "method": "GET", "url": "{{baseUrl}}/health" } },
+        { "name": "Readiness", "request": { "method": "GET", "url": "{{baseUrl}}/readiness" } },
+        { "name": "OpenAPI", "request": { "method": "GET", "url": "{{baseUrl}}/openapi.json" } }
+      ]
+    },
+    {
+      "name": "Listener",
+      "item": [
+        {
+          "name": "Listener Email JSON",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sender\": \"broker@example.com\",\n  \"recipients\": [\"quotes@strantas.ai\"],\n  \"subject\": \"ACME submission\",\n  \"body_raw\": \"<p>Employer: ACME Manufacturing</p>\",\n  \"body_text\": \"Employer: ACME Manufacturing\\nBroker: Northstar Benefits\\nEffective Date: 2026-07-01\\nSitus: TX\",\n  \"attachments\": []\n}"
+            },
+            "url": "{{baseUrl}}/v1/listener/email"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pipeline",
+      "item": [
+        { "name": "Reader Parse", "request": { "method": "POST", "url": "{{baseUrl}}/v1/reader/parse?submission_id={{submissionId}}" } },
+        { "name": "Extractor Run", "request": { "method": "POST", "url": "{{baseUrl}}/v1/extractor/run?submission_id={{submissionId}}" } },
+        { "name": "Normalizer Run", "request": { "method": "POST", "url": "{{baseUrl}}/v1/normalizer/run?submission_id={{submissionId}}" } },
+        { "name": "Submission Status", "request": { "method": "GET", "url": "{{baseUrl}}/v1/submissions/{{submissionId}}" } },
+        { "name": "Case Summary", "request": { "method": "GET", "url": "{{baseUrl}}/v1/cases/{{caseId}}" } },
+        { "name": "BQM Output", "request": { "method": "GET", "url": "{{baseUrl}}/v1/output/{{caseId}}" } }
+      ]
+    },
+    {
+      "name": "Operations",
+      "item": [
+        { "name": "Metrics", "request": { "method": "GET", "url": "{{baseUrl}}/metrics" } },
+        { "name": "Jobs", "request": { "method": "GET", "url": "{{baseUrl}}/v1/jobs" } },
+        { "name": "Alerts", "request": { "method": "GET", "url": "{{baseUrl}}/v1/alerts" } },
+        { "name": "Worker Status", "request": { "method": "GET", "url": "{{baseUrl}}/v1/worker/status" } }
+      ]
+    }
+  ]
+}

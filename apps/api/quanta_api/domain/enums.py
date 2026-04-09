@@ -60,3 +60,23 @@ class EmailProvider(str, Enum):
     microsoft_graph = "microsoft_graph"
     gmail = "gmail"
     smtp_webhook = "smtp_webhook"
+
+
+class JobStatus(str, Enum):
+    queued = "queued"
+    running = "running"
+    succeeded = "succeeded"
+    failed = "failed"
+    dead_letter = "dead_letter"
+
+
+class JobType(str, Enum):
+    connector_poll = "connector_poll"
+    connector_ingest = "connector_ingest"
+    submission_pipeline = "submission_pipeline"
+
+
+class AlertSeverity(str, Enum):
+    info = "info"
+    warning = "warning"
+    error = "error"

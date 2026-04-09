@@ -15,8 +15,8 @@ class ReaderService:
         self.submission_repository = submission_repository
         self.object_store = object_store
 
-    def parse_submission(self, submission_id: str) -> ReaderInventory:
-        submission = self.submission_repository.get(submission_id)
+    def parse_submission(self, submission_id: str, tenant_id: str | None = None) -> ReaderInventory:
+        submission = self.submission_repository.get(submission_id, tenant_id=tenant_id)
         if submission is None:
             raise KeyError(submission_id)
 

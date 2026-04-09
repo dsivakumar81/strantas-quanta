@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 import boto3
+import httpx
 import psycopg
 import pytest
 from fastapi.testclient import TestClient
@@ -44,6 +45,7 @@ def integration_settings() -> Settings:
         s3_region_name="us-east-1",
         s3_access_key_id="minio",
         s3_secret_access_key="minio123",
+        connector_admin_secret="quanta-admin-secret",
     )
 
 
@@ -51,7 +53,7 @@ def integration_settings() -> Settings:
 def reset_backends(integration_settings: Settings) -> None:
     with psycopg.connect("postgresql://quanta:quanta@127.0.0.1:5432/quanta") as connection:
         with connection.cursor() as cursor:
-            cursor.execute("TRUNCATE TABLE outputs, census, lobs, quotes, submissions RESTART IDENTITY CASCADE")
+            cursor.execute("TRUNCATE TABLE idempotency_keys, replay_audits, alerts, jobs, inbound_mailboxes, connector_cursors, outputs, census, lobs, quotes, submissions RESTART IDENTITY CASCADE")
         connection.commit()
 
     client = boto3.client(
@@ -73,3 +75,30 @@ def reset_backends(integration_settings: Settings) -> None:
 def client(integration_settings: Settings) -> TestClient:
     app = create_app(container=build_service_container(integration_settings))
     return TestClient(app)
+
+
+@pytest.fixture
+def connector_settings(integration_settings: Settings) -> Settings:
+    return integration_settings.model_copy(
+        update={
+            "graph_access_token": "graph-token",
+            "graph_mailbox_user": "broker-mailbox@example.com",
+            "gmail_access_token": "gmail-token",
+            "gmail_user_id": "me",
+        }
+    )
+
+
+@pytest.fixture
+def connector_client(connector_settings: Settings) -> TestClient:
+    container = build_service_container(connector_settings)
+    app = create_app(container=container)
+    return TestClient(app)
+
+
+@pytest.fixture
+def mock_transport_factory():
+    def factory(handler):
+        return httpx.Client(transport=httpx.MockTransport(handler), timeout=20.0)
+
+    return factory
