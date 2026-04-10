@@ -9,9 +9,12 @@ from pathlib import Path
 import zipfile
 
 import httpx
+from fastapi.testclient import TestClient
 
 from quanta_api.domain.enums import AlertSeverity, EmailProvider, JobStatus, JobType
 from quanta_api.domain.models import ConnectorCursor
+from quanta_api.bootstrap import build_service_container
+from quanta_api.main import create_app
 
 
 def _submission_body() -> dict[str, str]:
@@ -526,6 +529,66 @@ def test_provider_email_adapter_flow(client) -> None:
     extract = client.post("/v1/extractor/run", params={"submission_id": submission_id})
     assert extract.status_code == 200
     assert "vision" in extract.json()["detected_lobs"]
+
+
+def test_postgres_id_factory_resumes_after_container_restart(integration_settings) -> None:
+    first_app = create_app(container=build_service_container(integration_settings))
+    first_client = TestClient(first_app)
+    second_app = create_app(container=build_service_container(integration_settings))
+    second_client = TestClient(second_app)
+
+    first_listener = first_client.post(
+        "/v1/listener/provider-email",
+        json={
+            "provider": "microsoft_graph",
+            "payload": {
+                "subject": "Restart seed validation one",
+                "bodyPreview": "Employer: ACME Manufacturing\nBroker: Northstar Benefits\nEffective Date: 2026-07-01\nSitus: TX\nPlease quote vision.",
+                "body": {"content": "<p>Restart seed validation one</p>"},
+                "from": {"emailAddress": {"address": "broker@example.com"}},
+                "toRecipients": [{"emailAddress": {"address": "quotes@strantas.ai"}}],
+                "attachments": [
+                    {
+                        "name": "acme_census.pdf",
+                        "contentType": "application/pdf",
+                        "contentBytes": base64.b64encode(Path("samples/acme_census.pdf").read_bytes()).decode(),
+                    }
+                ],
+            },
+        },
+    )
+    assert first_listener.status_code == 202
+    first_submission_id = first_listener.json()["submission_id"]
+    first_extract = first_client.post("/v1/extractor/run", params={"submission_id": first_submission_id})
+    assert first_extract.status_code == 200
+    assert first_extract.json()["case_id"] == "QNT-2026-000001"
+    first_client.close()
+    second_listener = second_client.post(
+        "/v1/listener/provider-email",
+        json={
+            "provider": "microsoft_graph",
+            "payload": {
+                "subject": "Restart seed validation two",
+                "bodyPreview": "Employer: ACME Manufacturing\nBroker: Northstar Benefits\nEffective Date: 2026-07-01\nSitus: TX\nPlease quote vision.\nReference: restart-two",
+                "body": {"content": "<p>Restart seed validation two</p>"},
+                "from": {"emailAddress": {"address": "broker@example.com"}},
+                "toRecipients": [{"emailAddress": {"address": "quotes@strantas.ai"}}],
+                "attachments": [
+                    {
+                        "name": "acme_census.pdf",
+                        "contentType": "application/pdf",
+                        "contentBytes": base64.b64encode(Path("samples/acme_census.pdf").read_bytes()).decode(),
+                    }
+                ],
+            },
+        },
+    )
+    assert second_listener.status_code == 202
+    assert second_listener.json()["submission_id"] == "SUB-2026-000002"
+    second_extract = second_client.post("/v1/extractor/run", params={"submission_id": second_listener.json()["submission_id"]})
+    assert second_extract.status_code == 200
+    assert second_extract.json()["case_id"] == "QNT-2026-000002"
+    second_client.close()
 
 
 def test_inbound_mailbox_config_crud_and_tenant_scope(connector_client) -> None:

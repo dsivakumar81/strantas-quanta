@@ -3,10 +3,16 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timezone
 
+from sqlalchemy import create_engine, text
+
 
 class IdFactory:
     def __init__(self) -> None:
         self._counters: dict[tuple[str, int], int] = defaultdict(int)
+
+    def seed(self, prefix: str, year: int, counter: int) -> None:
+        key = (prefix, year)
+        self._counters[key] = max(self._counters[key], counter)
 
     def _next(self, prefix: str) -> tuple[int, int]:
         year = datetime.now(timezone.utc).year
@@ -41,3 +47,25 @@ class IdFactory:
     def lob_case_id(self, parent_case_id: str, lob_type: str) -> str:
         suffix = lob_type.upper().replace("GROUP_", "").replace("SUPPLEMENTAL_", "SUPP_")
         return f"{parent_case_id}-{suffix}"
+
+
+class PostgresIdFactory(IdFactory):
+    def __init__(self, database_url: str) -> None:
+        super().__init__()
+        self.engine = create_engine(database_url, future=True)
+
+    def _next(self, prefix: str) -> tuple[int, int]:
+        year = datetime.now(timezone.utc).year
+        statement = text(
+            """
+            INSERT INTO id_counters(prefix, year, counter)
+            VALUES (:prefix, :year, 1)
+            ON CONFLICT (prefix, year)
+            DO UPDATE SET counter = id_counters.counter + 1
+            RETURNING counter
+            """
+        )
+        with self.engine.begin() as connection:
+            counter = connection.execute(statement, {"prefix": prefix, "year": year}).scalar_one()
+        self.seed(prefix, year, counter)
+        return year, counter

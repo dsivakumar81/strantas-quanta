@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import re
 
 from sqlalchemy import JSON, DateTime, Index, String, create_engine, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
@@ -8,6 +9,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 from quanta_api.domain.enums import EmailProvider, JobStatus
 from quanta_api.domain.models import AlertEvent, BQMOutput, CarrierGroupRfp, CensusDataset, ConnectorCursor, IdempotencyRecord, InboundMailboxConfig, JobRecord, LOBRequest, QuoteRequest, ReplayAuditRecord, SubmissionEnvelope
 from quanta_api.domain.repositories import CaseRepository, OperationsRepository, SubmissionRepository
+from quanta_api.services.id_factory import IdFactory
 
 
 class Base(DeclarativeBase):
@@ -135,6 +137,14 @@ class ReplayAuditTable(Base):
     tenant_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True, default="default")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=False)
     payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+
+class IdCounterTable(Base):
+    __tablename__ = "id_counters"
+
+    prefix: Mapped[str] = mapped_column(String(16), primary_key=True)
+    year: Mapped[int] = mapped_column(primary_key=True)
+    counter: Mapped[int] = mapped_column(nullable=False)
 
 
 class PostgresSubmissionRepository(SubmissionRepository):
@@ -503,3 +513,39 @@ class PostgresOperationsRepository(OperationsRepository):
 def create_all_tables(database_url: str) -> None:
     engine = create_engine(database_url, future=True)
     Base.metadata.create_all(engine)
+
+
+_ID_PATTERN = re.compile(r"^(?P<prefix>[A-Z]+)-(?P<year>\d{4})-(?P<counter>\d{6})$")
+
+
+def seed_id_factory_from_postgres(ids: IdFactory, database_url: str) -> None:
+    engine = create_engine(database_url, future=True)
+    columns = (
+        select(SubmissionRecord.submission_id),
+        select(QuoteRecord.case_id),
+        select(CensusRecord.census_id),
+        select(JobRecordTable.job_id),
+        select(AlertRecord.alert_id),
+        select(ReplayAuditTable.audit_id),
+        select(IdCounterTable.prefix, IdCounterTable.year, IdCounterTable.counter),
+    )
+    with Session(engine) as session:
+        for statement in columns:
+            result = session.execute(statement)
+            for row in result:
+                values = tuple(row)
+                if len(values) == 3:
+                    prefix, year, counter = values
+                    ids.seed(prefix, year, counter)
+                    continue
+                identifier = values[0]
+                if not identifier:
+                    continue
+                match = _ID_PATTERN.match(identifier)
+                if match is None:
+                    continue
+                ids.seed(
+                    match.group("prefix"),
+                    int(match.group("year")),
+                    int(match.group("counter")),
+                )

@@ -12,7 +12,7 @@ from quanta_api.services.connector_execution import GmailConnectorExecutionServi
 from quanta_api.services.connector_orchestration import ConnectorOrchestrationService
 from quanta_api.services.email_adapters import EmailAdapterService
 from quanta_api.services.file_sniffer import FileSniffer
-from quanta_api.services.id_factory import IdFactory
+from quanta_api.services.id_factory import IdFactory, PostgresIdFactory
 from quanta_api.services.intake import IntakeService
 from quanta_api.services.job_queue import JobQueueService
 from quanta_api.services.job_runner import SubmissionJobRunner
@@ -32,9 +32,10 @@ from quanta_api.storage.postgres import PostgresCaseRepository, PostgresOperatio
 
 def build_service_container(app_settings: Settings | None = None) -> ServiceContainer:
     active_settings = app_settings or default_settings
-    ids = IdFactory()
+    ids: IdFactory = IdFactory()
 
     if active_settings.repository_backend == "postgres":
+        ids = PostgresIdFactory(active_settings.database_url)
         submission_repository = PostgresSubmissionRepository(active_settings.database_url)
         case_repository = PostgresCaseRepository(active_settings.database_url)
         operations_repository = PostgresOperationsRepository(active_settings.database_url)

@@ -26,7 +26,7 @@ def main() -> None:
         connection.autocommit = True
         with connection.cursor() as cursor:
             cursor.execute("DROP SCHEMA IF EXISTS public CASCADE")
-            cursor.execute("CREATE SCHEMA public")
+            cursor.execute("CREATE SCHEMA IF NOT EXISTS public")
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ def integration_settings() -> Settings:
 def reset_backends(integration_settings: Settings) -> None:
     with psycopg.connect("postgresql://quanta:quanta@127.0.0.1:5432/quanta") as connection:
         with connection.cursor() as cursor:
-            cursor.execute("TRUNCATE TABLE idempotency_keys, replay_audits, alerts, jobs, inbound_mailboxes, connector_cursors, outputs, census, lobs, quotes, submissions RESTART IDENTITY CASCADE")
+            cursor.execute("TRUNCATE TABLE id_counters, idempotency_keys, replay_audits, alerts, jobs, inbound_mailboxes, connector_cursors, outputs, census, lobs, quotes, submissions RESTART IDENTITY CASCADE")
         connection.commit()
 
     client = boto3.client(
